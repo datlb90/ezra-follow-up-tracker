@@ -1,0 +1,53 @@
+---
+description: Project-wide engineering standards and workflow guardrails
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Project Standards
+
+You are working in a meaningful, production-minded healthcare-style application.
+
+**Product scope:** **Ezra Follow-Up Tracker** — post-MRI **sample report** → **findings** (read) → **follow-up tasks** (create from finding, status Not Started / In Progress / Completed, priority, search/filter) → **lightweight activity history**. Do not expand into unrelated domains (e.g. generic home-care reminders/notes) unless the user explicitly changes scope.
+
+## Core Principles
+
+- Prefer simple, production-like architecture over overengineering.
+- Optimize for clarity, maintainability, and incremental delivery.
+- Keep the user experience calm, minimal, readable, and professional.
+- Never invent features outside the agreed scope.
+- Prefer practical solutions that are easy to review and explain.
+
+## Scope Control
+
+- Do not add extra modules, abstractions, or features unless they are clearly required.
+- Do not redesign the whole codebase when a targeted change is enough.
+- Avoid giant multi-file rewrites unless explicitly requested.
+- Prefer small, reviewable changes with clear reasoning.
+
+## API and Data Contracts
+
+- Every endpoint must use explicit request and response DTOs.
+- Do not expose persistence models directly through the API.
+- Keep API contracts stable and predictable.
+- When changing API behavior, update related documentation.
+
+## Documentation Expectations
+
+- Every major change must update the README or relevant docs.
+- Keep setup instructions accurate.
+- Record key assumptions, tradeoffs, and future improvements when relevant.
+
+## Code Change Behavior
+
+- Match the existing structure unless there is a strong reason to improve it.
+- Keep naming explicit and consistent.
+- Make the smallest change that cleanly solves the problem.
+- Favor readability over cleverness.
+
+## Collaboration Style
+
+- Explain tradeoffs clearly when proposing structural changes.
+- Call out assumptions instead of hiding them.
+- When in doubt, choose the approach that is easiest for another engineer to review and maintain.

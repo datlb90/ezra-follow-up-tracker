@@ -1,0 +1,61 @@
+---
+description: Frontend standards for Vue architecture, UX, and maintainability
+globs:
+  - "frontend/**/*"
+  - "**/*.vue"
+  - "**/*.ts"
+alwaysApply: true
+---
+
+# Frontend Standards
+
+## Framework and Structure
+
+- Use Vue 3 Composition API with TypeScript.
+- Components should be small, focused, and easy to understand.
+- Keep API calls in `api/`.
+- Keep domain types in `types/`.
+- Keep reusable UI logic in composables when it improves clarity.
+
+## Component Design
+
+- Prefer presentational simplicity over complex abstractions.
+- Break large views into smaller components with clear responsibilities.
+- Avoid deeply nested components unless necessary.
+- Keep props and emitted events explicit and typed.
+
+## UX Principles
+
+- Keep the UI calm, minimal, readable, and professional.
+- Avoid flashy UI, distracting animations, or decorative complexity.
+- Prefer accessible forms and clear loading/error/empty states.
+- Make important actions easy to understand.
+- Prioritize readability, spacing, and predictable interaction patterns.
+
+## State and Data Fetching
+
+- Keep data flow simple and explicit.
+- Avoid mixing API logic directly into large view components.
+- Handle loading, success, error, and empty states intentionally.
+- Prevent duplicated fetch logic when a shared abstraction is appropriate.
+
+## Forms and Accessibility
+
+- Use accessible labels, input associations, and button text.
+- Show clear validation messages near the relevant fields.
+- Disable or guard actions when inputs are invalid or requests are in progress.
+- Ensure keyboard-friendly interaction where practical.
+
+## Type Safety and Maintainability
+
+- Use typed request/response models consistently.
+- Avoid `any` unless absolutely necessary.
+- Prefer explicit domain types over ad hoc object shapes.
+- Keep computed values and watchers focused and easy to reason about.
+
+## Styling
+
+- Keep styling clean and restrained.
+- Favor consistent spacing, typography, and layout patterns.
+- Do not introduce visual noise.
+- Optimize for production-ready clarity, not visual experimentation.

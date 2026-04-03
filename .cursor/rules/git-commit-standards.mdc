@@ -1,0 +1,54 @@
+---
+description: Git and commit hygiene standards for clean, reviewable history
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# Git Commit Standards
+
+## Commit Safety
+
+- Do not make commits automatically.
+- Never commit on behalf of the user without explicit instruction.
+- Suggest commits only after checking that the relevant build and tests pass.
+
+## Commit Quality
+
+- Suggest concise commit messages using one of these prefixes:
+  - `docs:`
+  - `chore:`
+  - `feat:`
+  - `fix:`
+  - `refactor:`
+  - `test:`
+  - `style:`
+
+- Keep one concern per commit.
+- Avoid combining unrelated backend, frontend, and docs changes into a single commit unless they are tightly coupled.
+- Prefer small, reviewable commits that tell a clear story.
+
+## Before Suggesting a Commit
+
+- Confirm the app builds successfully.
+- Confirm tests pass for the changed area.
+- Confirm generated files and noise are not accidentally included.
+- Confirm docs are updated when the change affects setup, architecture, or behavior.
+
+## Commit Message Style
+
+- Use present tense.
+- Keep the subject short and specific.
+- Focus on what changed and why.
+- Examples:
+  - `docs: add project setup and architecture notes`
+  - `feat: add task status update endpoint`
+  - `fix: handle empty task list state in dashboard`
+  - `refactor: move task validation into application service`
+  - `test: cover task completion workflow`
+
+## Pull Request Mindset
+
+- Commits should make review easier, not harder.
+- Prefer a sequence of logical commits over one large snapshot.
+- When a change grows beyond one concern, split it into multiple commits.

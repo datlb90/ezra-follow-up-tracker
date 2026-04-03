@@ -1,0 +1,68 @@
+---
+description: Backend architecture and API implementation standards
+globs:
+  - "backend/**/*"
+  - "**/*.cs"
+alwaysApply: true
+---
+
+# Backend Standards
+
+## Architecture
+
+- Use clean layering:
+  - API
+  - Application
+  - Domain
+  - Infrastructure
+- Keep responsibilities separated clearly.
+- Keep business logic out of controllers.
+- Controllers should coordinate requests, not implement workflows.
+
+## API Design
+
+- Use request and response DTOs for every endpoint.
+- Return consistent API response shapes and status codes.
+- Validate all inputs before processing.
+- Prefer predictable, explicit contracts over implicit behavior.
+- Handle errors in a structured and user-safe way.
+
+## Async and Data Access
+
+- Use async methods for I/O-bound operations.
+- Pass cancellation tokens where appropriate.
+- Use EF Core migrations for schema changes.
+- Avoid leaking EF entities outside infrastructure or application boundaries.
+- Keep queries readable and efficient.
+
+## Business Logic
+
+- Place business rules in the application layer or domain layer, not controllers.
+- Prefer explicit services/use cases for non-trivial workflows.
+- Keep methods focused and cohesive.
+- Use soft production thinking:
+  - auditability
+  - idempotent status updates
+  - safe retries where relevant
+  - predictable state transitions
+
+## Validation and Safety
+
+- Validate required fields, enum values, and boundary conditions.
+- Guard against invalid state transitions.
+- Favor explicit checks over hidden assumptions.
+- Log meaningful events for operational visibility without over-logging noise.
+
+## Testing
+
+- Add basic unit and integration tests for non-trivial behavior.
+- Test core workflows, validation, and edge cases.
+- Prefer tests that validate behavior rather than implementation details.
+- Keep tests readable and maintainable.
+
+## General Coding Style
+
+- Prefer straightforward code over premature abstraction.
+- Keep classes and methods reasonably small.
+- Name services, handlers, DTOs, and entities clearly.
+- Avoid introducing patterns that are unnecessary for the current size of the project.
