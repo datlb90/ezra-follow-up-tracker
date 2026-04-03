@@ -61,10 +61,19 @@ More detail: [docs/architecture.md](docs/architecture.md) (domain and boundaries
 ```bash
 cd backend
 dotnet restore
-dotnet run
+dotnet run --project src/Ezra.Api
 ```
 
-API (default): `http://localhost:5000`
+API (default): `http://localhost:5124` — Swagger UI at `/swagger`
+
+The database is created and seeded automatically on first run (SQLite via `EnsureCreated`).
+
+### Tests
+
+```bash
+cd backend
+dotnet test
+```
 
 ### Frontend
 
@@ -74,7 +83,7 @@ npm install
 npm run dev
 ```
 
-App (typical Vite dev server): `http://localhost:5173`
+App (Vite dev server): `http://localhost:5173` — proxies `/api` to the backend automatically.
 
 ## 6. Architecture summary
 
@@ -104,14 +113,37 @@ Design choices: explicit request/response DTOs, no EF entities at the API bounda
 
 ## 8. Security and compliance notes
 
-This repo is a **demonstration**, not a certified HIPAA or SOC 2 deployment.
+### Security considerations
 
-**In scope for the demo**
+The following measures are present in this demo:
 
-- Avoid real **PII/PHI**; use synthetic sample content.
-- Validate inputs at API boundaries; use DTOs to limit over-posting and exposure.
-- **Activity history** supports an audit narrative (who did what is limited without auth; events still show *what* changed and *when*).
-- Document what full **HIPAA** / **SOC 2** would require (encryption, identity, access control, monitoring) — see [docs/tradeoffs.md](docs/tradeoffs.md).
+- **No real PHI** — all report, finding, and task data is synthetic seed content. No patient-identifiable information is stored or transmitted.
+- **Input validation** — all API endpoints enforce validation via DTOs with data annotations (`[Required]`, `[StringLength]`). Invalid requests are rejected with structured error responses before reaching business logic.
+- **Layered architecture** — the API surface is separated from domain logic and persistence. EF entities never leak to the client; only explicit DTOs cross the API boundary.
+- **Audit trail** — the activity history records what changed and when (task created, status transitions). This is a stepping stone toward full audit logging.
+- **Central API boundary** — all data flows through controller endpoints with explicit DTOs, making it straightforward to add authorization middleware (e.g. `[Authorize]`) in a single place.
+- **Global exception handler** — unhandled exceptions return a generic error message. Internal details and stack traces are not exposed to callers.
+- **Configuration-based secrets** — the connection string and other settings are loaded from `appsettings.json` / environment variables, not hardcoded. In production, these would be managed by a secrets vault.
+- **Logging avoids sensitive content** — no PHI exists in the seed data, and the application does not log request bodies.
+
+### HIPAA / SOC 2 posture
+
+This demo is **not** HIPAA compliant or SOC 2 certified. Full compliance requires infrastructure, organizational policies, and third-party audits that are beyond the scope of a take-home project.
+
+In a production healthcare deployment, the next steps would include:
+
+- **RBAC** — role-based access control tied to user identity
+- **SSO / MFA** — single sign-on with multi-factor authentication (e.g. OAuth2 / OIDC)
+- **Audit logging** — immutable, timestamped logs tied to authenticated user identity
+- **Data retention policy** — defined lifecycle for PHI storage, archival, and deletion
+- **Encryption** — data encrypted at rest and in transit (TLS, disk-level or column-level encryption)
+- **Secure backups** — encrypted, access-controlled, regularly tested
+- **Vulnerability management** — dependency scanning, penetration testing, patch cadence
+- **Incident response** — documented runbooks for breach detection, containment, and notification
+- **Infrastructure controls** — network segmentation, least-privilege IAM, secure CI/CD
+- **Monitoring and access reviews** — anomaly detection, periodic access audits, uptime/availability tracking
+
+For a detailed discussion, see [docs/tradeoffs.md](docs/tradeoffs.md).
 
 ## 9. Future improvements
 
