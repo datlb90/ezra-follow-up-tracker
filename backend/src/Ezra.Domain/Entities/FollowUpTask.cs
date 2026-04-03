@@ -10,6 +10,7 @@ public class FollowUpTask
     public string? Description { get; set; }
     public FollowUpTaskStatus Status { get; set; } = FollowUpTaskStatus.NotStarted;
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
+    public DateTime? DueAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

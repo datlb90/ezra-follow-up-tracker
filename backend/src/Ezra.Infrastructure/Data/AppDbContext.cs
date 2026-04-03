@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(2000);
+            entity.Property(e => e.Severity).HasConversion<string>().HasMaxLength(50);
             entity.HasOne(e => e.Report)
                 .WithMany(r => r.Findings)
                 .HasForeignKey(e => e.ReportId)

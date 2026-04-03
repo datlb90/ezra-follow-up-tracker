@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IFollowUpTaskService, FollowUpTaskService>();
         services.AddScoped<ITaskActivityService, TaskActivityService>();
+        services.AddSingleton<ITaskPriorityService, TaskPriorityService>();
 
         return services;
     }
