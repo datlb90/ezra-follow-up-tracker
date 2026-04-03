@@ -7,4 +7,5 @@ public interface IReportRepository
     Task<IReadOnlyList<Report>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Finding>> GetFindingsByReportIdAsync(Guid reportId, CancellationToken cancellationToken = default);
+    Task<bool> FindingExistsAsync(Guid findingId, CancellationToken cancellationToken = default);
 }

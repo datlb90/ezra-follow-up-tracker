@@ -13,6 +13,7 @@ public class FollowUpTaskServiceTests
     private readonly IFollowUpTaskRepository _taskRepo;
     private readonly ITaskActivityRepository _activityRepo;
     private readonly ITaskPriorityService _priorityService;
+    private readonly IReportRepository _reportRepo;
     private readonly FollowUpTaskService _service;
 
     private static readonly Guid FindingId = Guid.NewGuid();
@@ -22,7 +23,8 @@ public class FollowUpTaskServiceTests
         _taskRepo = Substitute.For<IFollowUpTaskRepository>();
         _activityRepo = Substitute.For<ITaskActivityRepository>();
         _priorityService = new TaskPriorityService();
-        _service = new FollowUpTaskService(_taskRepo, _activityRepo, _priorityService);
+        _reportRepo = Substitute.For<IReportRepository>();
+        _service = new FollowUpTaskService(_taskRepo, _activityRepo, _priorityService, _reportRepo);
     }
 
     // -------------------------------------------------------
@@ -42,6 +44,7 @@ public class FollowUpTaskServiceTests
 
         var result = await _service.CreateFromFindingAsync(request);
 
+        Assert.NotNull(result);
         Assert.Equal(FollowUpTaskStatus.NotStarted, result.Status);
     }
 
@@ -59,6 +62,7 @@ public class FollowUpTaskServiceTests
 
         var result = await _service.CreateFromFindingAsync(request);
 
+        Assert.NotNull(result);
         Assert.Equal(FindingId, result.FindingId);
         Assert.Equal("Schedule follow-up MRI", result.Title);
         Assert.Equal("Within 6 months", result.Description);
@@ -80,6 +84,25 @@ public class FollowUpTaskServiceTests
         await _activityRepo.Received(1).AddAsync(
             Arg.Is<TaskActivity>(a => a.Type == ActivityType.TaskCreated),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateFromFinding_InvalidFindingId_ReturnsNull()
+    {
+        _reportRepo.FindingExistsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        var request = new CreateFollowUpTaskRequest
+        {
+            FindingId = Guid.NewGuid(),
+            Title = "Should not be created"
+        };
+
+        var result = await _service.CreateFromFindingAsync(request);
+
+        Assert.Null(result);
+        await _taskRepo.DidNotReceive().AddAsync(
+            Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>());
     }
 
     // -------------------------------------------------------
@@ -229,6 +252,9 @@ public class FollowUpTaskServiceTests
 
     private void SetupCreateMocks()
     {
+        _reportRepo.FindingExistsAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+
         FollowUpTask? captured = null;
 
         _taskRepo.AddAsync(Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>())

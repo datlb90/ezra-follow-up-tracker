@@ -38,4 +38,9 @@ public class ReportRepository : IReportRepository
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<bool> FindingExistsAsync(Guid findingId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Findings.AnyAsync(f => f.Id == findingId, cancellationToken);
+    }
 }

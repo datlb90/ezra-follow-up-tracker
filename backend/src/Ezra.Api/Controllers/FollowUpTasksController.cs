@@ -34,7 +34,7 @@ public class FollowUpTasksController : ControllerBase
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var task = await _taskService.GetByIdAsync(id, cancellationToken);
-        return task is null ? NotFound() : Ok(task);
+        return task is null ? NotFound(new { message = "Task not found." }) : Ok(task);
     }
 
     [HttpPost]
@@ -45,6 +45,9 @@ public class FollowUpTasksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var created = await _taskService.CreateFromFindingAsync(request, cancellationToken);
+        if (created is null)
+            return BadRequest(new { message = "Finding not found. Verify the findingId is valid." });
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -58,7 +61,7 @@ public class FollowUpTasksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var updated = await _taskService.UpdateAsync(id, request, cancellationToken);
-        return updated is null ? NotFound() : Ok(updated);
+        return updated is null ? NotFound(new { message = "Task not found." }) : Ok(updated);
     }
 
     [HttpGet("dashboard")]

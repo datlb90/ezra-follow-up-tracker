@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 import PriorityLevelBadge from '@/components/shared/PriorityLevelBadge.vue'
 import { useTaskStore } from '@/stores/taskStore'
 import type { FollowUpTaskResponse, FollowUpTaskStatus } from '@/types/api'
@@ -7,6 +9,7 @@ const props = defineProps<{ task: FollowUpTaskResponse }>()
 defineEmits<{ viewActivity: [taskId: string] }>()
 
 const store = useTaskStore()
+const updating = ref(false)
 
 const statusOptions: { value: FollowUpTaskStatus; label: string }[] = [
   { value: 'NotStarted', label: 'Not Started' },
@@ -30,8 +33,10 @@ const statusStyles: Record<FollowUpTaskStatus, { active: string; inactive: strin
 }
 
 async function onStatusClick(newStatus: FollowUpTaskStatus) {
-  if (newStatus === props.task.status) return
+  if (newStatus === props.task.status || updating.value) return
+  updating.value = true
   await store.changeTask(props.task.id, { status: newStatus })
+  updating.value = false
 }
 </script>
 
@@ -55,7 +60,8 @@ async function onStatusClick(newStatus: FollowUpTaskStatus) {
           <button
             v-for="(opt, idx) in statusOptions"
             :key="opt.value"
-            class="border px-2.5 py-1 text-xs font-medium transition-colors"
+            :disabled="updating"
+            class="border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             :class="[
               task.status === opt.value
                 ? statusStyles[opt.value].active

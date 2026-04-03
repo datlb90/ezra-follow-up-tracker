@@ -9,6 +9,7 @@ public class UpdateFollowUpTaskRequest
     [StringLength(200, MinimumLength = 1)]
     public string? Title { get; init; }
 
+    [StringLength(2000)]
     public string? Description { get; init; }
     public FollowUpTaskStatus? Status { get; init; }
     public DateTime? DueAt { get; init; }

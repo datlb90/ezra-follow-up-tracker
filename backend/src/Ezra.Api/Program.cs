@@ -19,6 +19,13 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseExceptionHandler(error => error.Run(async context =>
+{
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsJsonAsync(new { message = "An unexpected error occurred." });
+}));
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

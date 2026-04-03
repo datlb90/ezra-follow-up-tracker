@@ -19,11 +19,24 @@ const labels: Record<TaskPriorityLevel, string> = {
 </script>
 
 <template>
-  <span
-    class="inline-block cursor-default rounded-full px-2.5 py-0.5 text-xs font-medium"
-    :class="styles[props.level]"
-    :title="props.reason"
-  >
-    {{ labels[props.level] }}
+  <span class="priority-badge relative inline-block cursor-default">
+    <span
+      class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+      :class="styles[props.level]"
+    >
+      {{ labels[props.level] }}
+    </span>
+    <span
+      v-if="props.reason"
+      class="priority-tooltip pointer-events-none absolute left-0 top-full z-50 mt-1.5 whitespace-nowrap rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 opacity-0 shadow-md"
+    >
+      {{ props.reason }}
+    </span>
   </span>
 </template>
+
+<style scoped>
+.priority-badge:hover .priority-tooltip {
+  opacity: 1;
+}
+</style>

@@ -11,16 +11,18 @@ const report = ref<ReportResponse | null>(null)
 const findings = ref<FindingResponse[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+const emptyReports = ref(false)
 const selectedFinding = ref<FindingResponse | null>(null)
 const successMessage = ref<string | null>(null)
 
 async function loadFindings() {
   loading.value = true
   error.value = null
+  emptyReports.value = false
   try {
     const reports = await getReports()
     if (reports.length === 0) {
-      error.value = 'No reports found.'
+      emptyReports.value = true
       return
     }
     report.value = reports[0]
@@ -61,7 +63,11 @@ onMounted(loadFindings)
 
     <LoadingSpinner v-if="loading" />
 
-    <p v-else-if="error" class="mt-6 text-sm text-red-600">{{ error }}</p>
+    <p v-else-if="error" class="mt-6 text-sm text-red-600" role="alert">{{ error }}</p>
+
+    <p v-else-if="emptyReports" class="mt-6 text-sm text-slate-400">
+      No reports available yet.
+    </p>
 
     <p v-else-if="findings.length === 0" class="mt-6 text-sm text-slate-400">
       No findings available.

@@ -11,9 +11,11 @@ import type { TaskFilters as TaskFiltersType, TaskPriorityLevel } from '@/types/
 const store = useTaskStore()
 const activityTaskId = ref<string | null>(null)
 const activePriorityFilter = ref<TaskPriorityLevel | undefined>()
+const hasActiveFilters = ref(false)
 
 function onFilter(filters: TaskFiltersType) {
   activePriorityFilter.value = filters.priorityLevel
+  hasActiveFilters.value = !!(filters.status || filters.priorityLevel || filters.search)
   store.fetchTasks({ status: filters.status, search: filters.search })
 }
 
@@ -43,7 +45,7 @@ onMounted(() => {
     <LoadingSpinner v-if="store.loading" />
 
     <p v-else-if="filteredTasks.length === 0" class="mt-6 text-sm text-slate-400">
-      No tasks found. Create one from the Findings page.
+      {{ hasActiveFilters ? 'No tasks match the current filters.' : 'No tasks found. Create one from the Findings page.' }}
     </p>
 
     <div v-else class="mt-4 space-y-3">

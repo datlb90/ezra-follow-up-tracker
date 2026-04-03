@@ -24,10 +24,16 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30" @click.self="$emit('close')">
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="activity-panel-heading"
+    @click.self="$emit('close')"
+  >
     <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-slate-800">Activity History</h3>
+        <h3 id="activity-panel-heading" class="text-base font-semibold text-slate-800">Activity History</h3>
         <button
           class="text-slate-400 hover:text-slate-600 text-sm"
           @click="$emit('close')"

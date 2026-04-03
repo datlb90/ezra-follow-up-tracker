@@ -10,15 +10,18 @@ public class FollowUpTaskService : IFollowUpTaskService
     private readonly IFollowUpTaskRepository _taskRepository;
     private readonly ITaskActivityRepository _activityRepository;
     private readonly ITaskPriorityService _priorityService;
+    private readonly IReportRepository _reportRepository;
 
     public FollowUpTaskService(
         IFollowUpTaskRepository taskRepository,
         ITaskActivityRepository activityRepository,
-        ITaskPriorityService priorityService)
+        ITaskPriorityService priorityService,
+        IReportRepository reportRepository)
     {
         _taskRepository = taskRepository;
         _activityRepository = activityRepository;
         _priorityService = priorityService;
+        _reportRepository = reportRepository;
     }
 
     public async Task<IReadOnlyList<FollowUpTaskResponse>> GetTasksAsync(
@@ -37,10 +40,13 @@ public class FollowUpTaskService : IFollowUpTaskService
         return task is null ? null : MapToResponse(task);
     }
 
-    public async Task<FollowUpTaskResponse> CreateFromFindingAsync(
+    public async Task<FollowUpTaskResponse?> CreateFromFindingAsync(
         CreateFollowUpTaskRequest request,
         CancellationToken cancellationToken = default)
     {
+        var findingExists = await _reportRepository.FindingExistsAsync(request.FindingId, cancellationToken);
+        if (!findingExists) return null;
+
         var now = DateTime.UtcNow;
 
         var task = new FollowUpTask
