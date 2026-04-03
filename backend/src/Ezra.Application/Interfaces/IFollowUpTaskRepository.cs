@@ -7,7 +7,6 @@ public interface IFollowUpTaskRepository
 {
     Task<IReadOnlyList<FollowUpTask>> GetAllAsync(
         FollowUpTaskStatus? status = null,
-        TaskPriority? priority = null,
         string? search = null,
         CancellationToken cancellationToken = default);
 

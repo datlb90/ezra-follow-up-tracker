@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 
-using Ezra.Domain.Enums;
-
 namespace Ezra.Application.DTOs.Tasks;
 
 public class CreateFollowUpTaskRequest
@@ -15,5 +13,5 @@ public class CreateFollowUpTaskRequest
 
     public string? Description { get; init; }
 
-    public TaskPriority Priority { get; init; } = TaskPriority.Medium;
+    public DateTime? DueAt { get; init; }
 }

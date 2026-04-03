@@ -7,7 +7,6 @@ public interface IFollowUpTaskService
 {
     Task<IReadOnlyList<FollowUpTaskResponse>> GetTasksAsync(
         FollowUpTaskStatus? status = null,
-        TaskPriority? priority = null,
         string? search = null,
         CancellationToken cancellationToken = default);
 

@@ -39,7 +39,6 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(2000);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(50);
-            entity.Property(e => e.Priority).HasConversion<string>().HasMaxLength(50);
             entity.HasOne(e => e.Finding)
                 .WithMany(f => f.FollowUpTasks)
                 .HasForeignKey(e => e.FindingId)

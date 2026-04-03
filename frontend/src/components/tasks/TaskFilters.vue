@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
-import type { FollowUpTaskStatus, TaskFilters, TaskPriority } from '@/types/api'
+import type { FollowUpTaskStatus, TaskFilters, TaskPriorityLevel } from '@/types/api'
 
 const emit = defineEmits<{ filter: [filters: TaskFilters] }>()
 
 const status = ref<FollowUpTaskStatus | ''>('')
-const priority = ref<TaskPriority | ''>('')
+const priorityLevel = ref<TaskPriorityLevel | ''>('')
 const search = ref('')
 
 function emitFilters() {
   emit('filter', {
     status: status.value || undefined,
-    priority: priority.value || undefined,
+    priorityLevel: priorityLevel.value || undefined,
     search: search.value.trim() || undefined
   })
 }
 
-watch([status, priority], emitFilters)
+watch([status, priorityLevel], emitFilters)
 
 let debounceTimer: ReturnType<typeof setTimeout>
 watch(search, () => {
@@ -40,14 +40,15 @@ watch(search, () => {
     </select>
 
     <select
-      v-model="priority"
+      v-model="priorityLevel"
       aria-label="Filter by priority"
       class="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
     >
       <option value="">All Priorities</option>
-      <option value="Low">Low</option>
-      <option value="Medium">Medium</option>
+      <option value="Critical">Critical</option>
       <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
     </select>
 
     <input

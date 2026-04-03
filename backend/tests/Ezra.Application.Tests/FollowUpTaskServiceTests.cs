@@ -12,6 +12,7 @@ public class FollowUpTaskServiceTests
 {
     private readonly IFollowUpTaskRepository _taskRepo;
     private readonly ITaskActivityRepository _activityRepo;
+    private readonly ITaskPriorityService _priorityService;
     private readonly FollowUpTaskService _service;
 
     private static readonly Guid FindingId = Guid.NewGuid();
@@ -20,7 +21,8 @@ public class FollowUpTaskServiceTests
     {
         _taskRepo = Substitute.For<IFollowUpTaskRepository>();
         _activityRepo = Substitute.For<ITaskActivityRepository>();
-        _service = new FollowUpTaskService(_taskRepo, _activityRepo);
+        _priorityService = new TaskPriorityService();
+        _service = new FollowUpTaskService(_taskRepo, _activityRepo, _priorityService);
     }
 
     // -------------------------------------------------------
@@ -33,15 +35,10 @@ public class FollowUpTaskServiceTests
         var request = new CreateFollowUpTaskRequest
         {
             FindingId = FindingId,
-            Title = "Book thyroid ultrasound",
-            Priority = TaskPriority.High
+            Title = "Book thyroid ultrasound"
         };
 
-        _taskRepo.AddAsync(Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<FollowUpTask>());
-
-        _activityRepo.AddAsync(Arg.Any<TaskActivity>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<TaskActivity>());
+        SetupCreateMocks();
 
         var result = await _service.CreateFromFindingAsync(request);
 
@@ -55,22 +52,16 @@ public class FollowUpTaskServiceTests
         {
             FindingId = FindingId,
             Title = "Schedule follow-up MRI",
-            Description = "Within 6 months",
-            Priority = TaskPriority.Medium
+            Description = "Within 6 months"
         };
 
-        _taskRepo.AddAsync(Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<FollowUpTask>());
-
-        _activityRepo.AddAsync(Arg.Any<TaskActivity>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<TaskActivity>());
+        SetupCreateMocks();
 
         var result = await _service.CreateFromFindingAsync(request);
 
         Assert.Equal(FindingId, result.FindingId);
         Assert.Equal("Schedule follow-up MRI", result.Title);
         Assert.Equal("Within 6 months", result.Description);
-        Assert.Equal(TaskPriority.Medium, result.Priority);
     }
 
     [Fact]
@@ -79,15 +70,10 @@ public class FollowUpTaskServiceTests
         var request = new CreateFollowUpTaskRequest
         {
             FindingId = FindingId,
-            Title = "Consult urologist",
-            Priority = TaskPriority.Low
+            Title = "Consult urologist"
         };
 
-        _taskRepo.AddAsync(Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<FollowUpTask>());
-
-        _activityRepo.AddAsync(Arg.Any<TaskActivity>(), Arg.Any<CancellationToken>())
-            .Returns(ci => ci.Arg<TaskActivity>());
+        SetupCreateMocks();
 
         await _service.CreateFromFindingAsync(request);
 
@@ -137,21 +123,6 @@ public class FollowUpTaskServiceTests
     }
 
     [Fact]
-    public async Task Update_ChangingPriorityOnly_DoesNotRecordStatusActivity()
-    {
-        var task = CreateSampleTask(FollowUpTaskStatus.NotStarted, TaskPriority.Low);
-        _taskRepo.GetByIdAsync(task.Id, Arg.Any<CancellationToken>()).Returns(task);
-
-        var request = new UpdateFollowUpTaskRequest { Priority = TaskPriority.High };
-
-        await _service.UpdateAsync(task.Id, request);
-
-        await _activityRepo.DidNotReceive().AddAsync(
-            Arg.Any<TaskActivity>(),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
     public async Task Update_NonExistentTask_ReturnsNull()
     {
         _taskRepo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -166,46 +137,33 @@ public class FollowUpTaskServiceTests
     }
 
     // -------------------------------------------------------
-    // Filtering tasks by status and priority
+    // Filtering tasks by status and search
     // -------------------------------------------------------
 
     [Fact]
     public async Task GetTasks_FilterByStatus_PassesFilterToRepository()
     {
         _taskRepo.GetAllAsync(
-            FollowUpTaskStatus.Completed, null, null, Arg.Any<CancellationToken>())
+            FollowUpTaskStatus.Completed, null, Arg.Any<CancellationToken>())
             .Returns(new List<FollowUpTask>());
 
         await _service.GetTasksAsync(status: FollowUpTaskStatus.Completed);
 
         await _taskRepo.Received(1).GetAllAsync(
-            FollowUpTaskStatus.Completed, null, null, Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task GetTasks_FilterByPriority_PassesFilterToRepository()
-    {
-        _taskRepo.GetAllAsync(
-            null, TaskPriority.High, null, Arg.Any<CancellationToken>())
-            .Returns(new List<FollowUpTask>());
-
-        await _service.GetTasksAsync(priority: TaskPriority.High);
-
-        await _taskRepo.Received(1).GetAllAsync(
-            null, TaskPriority.High, null, Arg.Any<CancellationToken>());
+            FollowUpTaskStatus.Completed, null, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task GetTasks_WithSearch_PassesSearchToRepository()
     {
         _taskRepo.GetAllAsync(
-            null, null, "thyroid", Arg.Any<CancellationToken>())
+            null, "thyroid", Arg.Any<CancellationToken>())
             .Returns(new List<FollowUpTask>());
 
         await _service.GetTasksAsync(search: "thyroid");
 
         await _taskRepo.Received(1).GetAllAsync(
-            null, null, "thyroid", Arg.Any<CancellationToken>());
+            null, "thyroid", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -217,7 +175,7 @@ public class FollowUpTaskServiceTests
             CreateSampleTask(FollowUpTaskStatus.InProgress)
         };
 
-        _taskRepo.GetAllAsync(null, null, null, Arg.Any<CancellationToken>())
+        _taskRepo.GetAllAsync(null, null, Arg.Any<CancellationToken>())
             .Returns(tasks);
 
         var result = await _service.GetTasksAsync();
@@ -240,7 +198,7 @@ public class FollowUpTaskServiceTests
             CreateSampleTask(FollowUpTaskStatus.Completed)
         };
 
-        _taskRepo.GetAllAsync(null, null, null, Arg.Any<CancellationToken>())
+        _taskRepo.GetAllAsync(null, null, Arg.Any<CancellationToken>())
             .Returns(tasks);
 
         var summary = await _service.GetDashboardSummaryAsync();
@@ -254,7 +212,7 @@ public class FollowUpTaskServiceTests
     [Fact]
     public async Task GetDashboardSummary_EmptyList_ReturnsAllZeros()
     {
-        _taskRepo.GetAllAsync(null, null, null, Arg.Any<CancellationToken>())
+        _taskRepo.GetAllAsync(null, null, Arg.Any<CancellationToken>())
             .Returns(new List<FollowUpTask>());
 
         var summary = await _service.GetDashboardSummaryAsync();
@@ -269,9 +227,38 @@ public class FollowUpTaskServiceTests
     // Helpers
     // -------------------------------------------------------
 
+    private void SetupCreateMocks()
+    {
+        FollowUpTask? captured = null;
+
+        _taskRepo.AddAsync(Arg.Any<FollowUpTask>(), Arg.Any<CancellationToken>())
+            .Returns(ci =>
+            {
+                captured = ci.Arg<FollowUpTask>();
+                return captured;
+            });
+
+        _taskRepo.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(ci =>
+            {
+                if (captured is null) return null;
+                captured.Finding = new Finding
+                {
+                    Id = captured.FindingId,
+                    ReportId = Guid.NewGuid(),
+                    Title = "Sample finding",
+                    Description = "Sample description",
+                    Severity = FindingSeverity.Medium
+                };
+                return captured;
+            });
+
+        _activityRepo.AddAsync(Arg.Any<TaskActivity>(), Arg.Any<CancellationToken>())
+            .Returns(ci => ci.Arg<TaskActivity>());
+    }
+
     private static FollowUpTask CreateSampleTask(
-        FollowUpTaskStatus status = FollowUpTaskStatus.NotStarted,
-        TaskPriority priority = TaskPriority.Medium)
+        FollowUpTaskStatus status = FollowUpTaskStatus.NotStarted)
     {
         return new FollowUpTask
         {
@@ -279,9 +266,16 @@ public class FollowUpTaskServiceTests
             FindingId = FindingId,
             Title = "Sample task",
             Status = status,
-            Priority = priority,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Finding = new Finding
+            {
+                Id = FindingId,
+                ReportId = Guid.NewGuid(),
+                Title = "Sample finding",
+                Description = "Sample description",
+                Severity = FindingSeverity.Medium
+            }
         };
     }
 }

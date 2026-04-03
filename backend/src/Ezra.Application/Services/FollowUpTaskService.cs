@@ -9,22 +9,24 @@ public class FollowUpTaskService : IFollowUpTaskService
 {
     private readonly IFollowUpTaskRepository _taskRepository;
     private readonly ITaskActivityRepository _activityRepository;
+    private readonly ITaskPriorityService _priorityService;
 
     public FollowUpTaskService(
         IFollowUpTaskRepository taskRepository,
-        ITaskActivityRepository activityRepository)
+        ITaskActivityRepository activityRepository,
+        ITaskPriorityService priorityService)
     {
         _taskRepository = taskRepository;
         _activityRepository = activityRepository;
+        _priorityService = priorityService;
     }
 
     public async Task<IReadOnlyList<FollowUpTaskResponse>> GetTasksAsync(
         FollowUpTaskStatus? status = null,
-        TaskPriority? priority = null,
         string? search = null,
         CancellationToken cancellationToken = default)
     {
-        var tasks = await _taskRepository.GetAllAsync(status, priority, search, cancellationToken);
+        var tasks = await _taskRepository.GetAllAsync(status, search, cancellationToken);
 
         return tasks.Select(MapToResponse).ToList();
     }
@@ -47,8 +49,8 @@ public class FollowUpTaskService : IFollowUpTaskService
             FindingId = request.FindingId,
             Title = request.Title,
             Description = request.Description,
-            Priority = request.Priority,
             Status = FollowUpTaskStatus.NotStarted,
+            DueAt = request.DueAt,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -64,7 +66,8 @@ public class FollowUpTaskService : IFollowUpTaskService
             Summary = $"Task \"{created.Title}\" created from finding"
         }, cancellationToken);
 
-        return MapToResponse(created);
+        var loaded = await _taskRepository.GetByIdAsync(created.Id, cancellationToken);
+        return MapToResponse(loaded!);
     }
 
     public async Task<FollowUpTaskResponse?> UpdateAsync(
@@ -80,7 +83,7 @@ public class FollowUpTaskService : IFollowUpTaskService
         if (request.Title is not null) task.Title = request.Title;
         if (request.Description is not null) task.Description = request.Description;
         if (request.Status.HasValue) task.Status = request.Status.Value;
-        if (request.Priority.HasValue) task.Priority = request.Priority.Value;
+        if (request.DueAt.HasValue) task.DueAt = request.DueAt.Value;
         task.UpdatedAt = DateTime.UtcNow;
 
         await _taskRepository.UpdateAsync(task, cancellationToken);
@@ -113,15 +116,23 @@ public class FollowUpTaskService : IFollowUpTaskService
         };
     }
 
-    private static FollowUpTaskResponse MapToResponse(FollowUpTask task) => new()
+    private FollowUpTaskResponse MapToResponse(FollowUpTask task)
     {
-        Id = task.Id,
-        FindingId = task.FindingId,
-        Title = task.Title,
-        Description = task.Description,
-        Status = task.Status,
-        Priority = task.Priority,
-        CreatedAt = task.CreatedAt,
-        UpdatedAt = task.UpdatedAt
-    };
+        var priorityResult = _priorityService.Evaluate(task, task.Finding);
+
+        return new FollowUpTaskResponse
+        {
+            Id = task.Id,
+            FindingId = task.FindingId,
+            Title = task.Title,
+            Description = task.Description,
+            Status = task.Status,
+            DueAt = task.DueAt,
+            CreatedAt = task.CreatedAt,
+            UpdatedAt = task.UpdatedAt,
+            PriorityScore = priorityResult.PriorityScore,
+            PriorityLevel = priorityResult.PriorityLevel,
+            PriorityReason = priorityResult.PriorityReason
+        };
+    }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import { useTaskStore } from '@/stores/taskStore'
@@ -8,7 +8,12 @@ const store = useTaskStore()
 
 onMounted(() => {
   store.fetchDashboardSummary()
+  store.fetchTasks()
 })
+
+const criticalCount = computed(() =>
+  store.tasks.filter(t => t.priorityLevel === 'Critical').length
+)
 
 const cards = [
   { label: 'Total Tasks', key: 'totalTasks' as const, accent: 'border-l-slate-400' },
@@ -31,7 +36,7 @@ const cards = [
       {{ store.error }}
     </p>
 
-    <div v-else class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div v-else class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <div
         v-for="card in cards"
         :key="card.key"
@@ -42,6 +47,10 @@ const cards = [
         <p class="mt-1 text-2xl font-semibold text-slate-800">
           {{ store.dashboardSummary?.[card.key] ?? 0 }}
         </p>
+      </div>
+      <div class="rounded-lg border border-slate-200 border-l-4 border-l-red-400 bg-white p-5">
+        <p class="text-sm font-medium text-slate-500">Critical</p>
+        <p class="mt-1 text-2xl font-semibold text-slate-800">{{ criticalCount }}</p>
       </div>
     </div>
   </div>

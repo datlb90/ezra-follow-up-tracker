@@ -1,19 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import TaskActivityPanel from '@/components/tasks/TaskActivityPanel.vue'
 import TaskFilters from '@/components/tasks/TaskFilters.vue'
 import TaskRow from '@/components/tasks/TaskRow.vue'
 import { useTaskStore } from '@/stores/taskStore'
-import type { TaskFilters as TaskFiltersType } from '@/types/api'
+import type { TaskFilters as TaskFiltersType, TaskPriorityLevel } from '@/types/api'
 
 const store = useTaskStore()
 const activityTaskId = ref<string | null>(null)
+const activePriorityFilter = ref<TaskPriorityLevel | undefined>()
 
 function onFilter(filters: TaskFiltersType) {
-  store.fetchTasks(filters)
+  activePriorityFilter.value = filters.priorityLevel
+  store.fetchTasks({ status: filters.status, search: filters.search })
 }
+
+const filteredTasks = computed(() => {
+  if (!activePriorityFilter.value) return store.tasks
+  return store.tasks.filter(t => t.priorityLevel === activePriorityFilter.value)
+})
 
 onMounted(() => {
   store.fetchTasks()
@@ -35,13 +42,13 @@ onMounted(() => {
 
     <LoadingSpinner v-if="store.loading" />
 
-    <p v-else-if="store.tasks.length === 0" class="mt-6 text-sm text-slate-400">
+    <p v-else-if="filteredTasks.length === 0" class="mt-6 text-sm text-slate-400">
       No tasks found. Create one from the Findings page.
     </p>
 
     <div v-else class="mt-4 space-y-3">
       <TaskRow
-        v-for="task in store.tasks"
+        v-for="task in filteredTasks"
         :key="task.id"
         :task="task"
         @view-activity="activityTaskId = $event"

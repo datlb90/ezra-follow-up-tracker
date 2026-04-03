@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 import { useTaskStore } from '@/stores/taskStore'
-import type { FindingResponse, TaskPriority } from '@/types/api'
+import type { FindingResponse } from '@/types/api'
 
 const props = defineProps<{ finding: FindingResponse }>()
 const emit = defineEmits<{ close: []; created: [] }>()
@@ -11,7 +11,7 @@ const store = useTaskStore()
 
 const title = ref(props.finding.title)
 const description = ref('')
-const priority = ref<TaskPriority>('Medium')
+const dueAt = ref('')
 const submitting = ref(false)
 
 async function onSubmit() {
@@ -21,7 +21,7 @@ async function onSubmit() {
     findingId: props.finding.id,
     title: title.value.trim(),
     description: description.value.trim() || undefined,
-    priority: priority.value
+    dueAt: dueAt.value || undefined
   })
   submitting.value = false
   if (result) emit('created')
@@ -58,16 +58,13 @@ async function onSubmit() {
         </div>
 
         <div>
-          <label for="task-priority" class="block text-sm font-medium text-slate-700">Priority</label>
-          <select
-            id="task-priority"
-            v-model="priority"
+          <label for="task-due-date" class="block text-sm font-medium text-slate-700">Due Date</label>
+          <input
+            id="task-due-date"
+            v-model="dueAt"
+            type="date"
             class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
+          />
         </div>
 
         <div class="flex justify-end gap-2 pt-2">

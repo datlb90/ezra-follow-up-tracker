@@ -1,3 +1,5 @@
+using Ezra.Domain.Enums;
+
 namespace Ezra.Application.DTOs.Reports;
 
 public class FindingResponse
@@ -6,4 +8,5 @@ public class FindingResponse
     public Guid ReportId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
+    public FindingSeverity? Severity { get; init; }
 }

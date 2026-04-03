@@ -1,6 +1,8 @@
 export type FollowUpTaskStatus = 'NotStarted' | 'InProgress' | 'Completed'
 
-export type TaskPriority = 'Low' | 'Medium' | 'High'
+export type FindingSeverity = 'Low' | 'Medium' | 'High'
+
+export type TaskPriorityLevel = 'Low' | 'Medium' | 'High' | 'Critical'
 
 export type ActivityType = 'TaskCreated' | 'StatusChanged' | 'TaskUpdated'
 
@@ -16,6 +18,7 @@ export interface FindingResponse {
   reportId: string
   title: string
   description: string
+  severity: FindingSeverity | null
 }
 
 export interface FollowUpTaskResponse {
@@ -24,23 +27,25 @@ export interface FollowUpTaskResponse {
   title: string
   description: string | null
   status: FollowUpTaskStatus
-  priority: TaskPriority
+  dueAt: string | null
   createdAt: string
   updatedAt: string
+  priorityScore: number
+  priorityLevel: TaskPriorityLevel
+  priorityReason: string
 }
 
 export interface CreateFollowUpTaskRequest {
   findingId: string
   title: string
   description?: string
-  priority?: TaskPriority
+  dueAt?: string
 }
 
 export interface UpdateFollowUpTaskRequest {
   title?: string
   description?: string
   status?: FollowUpTaskStatus
-  priority?: TaskPriority
 }
 
 export interface DashboardSummaryResponse {
@@ -60,6 +65,6 @@ export interface TaskActivityResponse {
 
 export interface TaskFilters {
   status?: FollowUpTaskStatus
-  priority?: TaskPriority
+  priorityLevel?: TaskPriorityLevel
   search?: string
 }

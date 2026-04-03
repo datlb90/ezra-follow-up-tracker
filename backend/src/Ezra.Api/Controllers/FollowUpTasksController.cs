@@ -21,11 +21,10 @@ public class FollowUpTasksController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<FollowUpTaskResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
         [FromQuery] FollowUpTaskStatus? status,
-        [FromQuery] TaskPriority? priority,
         [FromQuery] string? search,
         CancellationToken cancellationToken)
     {
-        var tasks = await _taskService.GetTasksAsync(status, priority, search, cancellationToken);
+        var tasks = await _taskService.GetTasksAsync(status, search, cancellationToken);
         return Ok(tasks);
     }
 

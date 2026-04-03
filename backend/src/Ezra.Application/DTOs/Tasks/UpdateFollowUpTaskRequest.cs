@@ -11,5 +11,5 @@ public class UpdateFollowUpTaskRequest
 
     public string? Description { get; init; }
     public FollowUpTaskStatus? Status { get; init; }
-    public TaskPriority? Priority { get; init; }
+    public DateTime? DueAt { get; init; }
 }

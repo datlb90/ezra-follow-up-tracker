@@ -34,7 +34,8 @@ public class ReportService : IReportService
             Id = f.Id,
             ReportId = f.ReportId,
             Title = f.Title,
-            Description = f.Description
+            Description = f.Description,
+            Severity = f.Severity
         }).ToList();
     }
 }

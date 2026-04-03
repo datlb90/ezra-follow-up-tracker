@@ -18,17 +18,16 @@ public class FollowUpTaskRepository : IFollowUpTaskRepository
 
     public async Task<IReadOnlyList<FollowUpTask>> GetAllAsync(
         FollowUpTaskStatus? status = null,
-        TaskPriority? priority = null,
         string? search = null,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.FollowUpTasks.AsNoTracking().AsQueryable();
+        var query = _context.FollowUpTasks
+            .AsNoTracking()
+            .Include(t => t.Finding)
+            .AsQueryable();
 
         if (status.HasValue)
             query = query.Where(t => t.Status == status.Value);
-
-        if (priority.HasValue)
-            query = query.Where(t => t.Priority == priority.Value);
 
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(t =>
@@ -43,6 +42,7 @@ public class FollowUpTaskRepository : IFollowUpTaskRepository
     public async Task<FollowUpTask?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.FollowUpTasks
+            .Include(t => t.Finding)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
