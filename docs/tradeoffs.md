@@ -1,6 +1,6 @@
 # Tradeoffs & Assumptions
 
-This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** workflows (sample **findings** → **follow-up tasks** → **status** / **priority** → **activity history**). It is intentionally scoped as a small full-stack exercise. The goal is to demonstrate sound engineering judgment and domain-aligned boundaries, not to fully replicate a production-grade healthcare system. Below are the key tradeoffs and decisions made.
+This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** workflows (sample **findings** → **follow-up tasks** → **status** → **automatic priority** → **activity history**). It is intentionally scoped as a small full-stack exercise. The goal is to demonstrate sound engineering judgment and domain-aligned boundaries, not to fully replicate a production-grade healthcare system. Below are the key tradeoffs and decisions made.
 
 ---
 
@@ -118,7 +118,49 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 ---
 
-## 6. Architecture Scope
+## 6. Prioritization: Computed vs Stored
+
+**Decision:** Priority is computed at read time by a rule-based `TaskPriorityService`, not stored on the task entity
+
+**Why:**
+
+- Priority depends on factors that change over time (due-date urgency shifts daily, status changes via user action)
+- Avoids stale priority values that drift from reality
+- Keeps the domain model simpler — no manual priority field to maintain or reconcile
+- Scoring rules (severity weight, due-date brackets, status bonus) are transparent and easy to explain
+
+**Scoring rules:**
+
+| Factor | Value | Points |
+|--------|-------|--------|
+| Finding severity | High | +50 |
+| | Medium | +30 |
+| | Low / Unknown | +10 |
+| Due date | Overdue | Critical override |
+| | 0–3 days | +40 |
+| | 4–7 days | +20 |
+| | Later / none | +0 |
+| Task status | Not Started | +10 |
+| | In Progress | +5 |
+| | Completed | +0 |
+
+Score mapping: ≥80 → High, ≥50 → Medium, <50 → Low. Overdue always → Critical.
+
+**Tradeoffs:**
+
+- Priority cannot be queried or sorted at the database level (filtering is client-side)
+- Computation runs on every read — acceptable for demo scale, not ideal for large datasets
+- No manual override — users cannot pin a task to a specific priority level
+
+**Production Alternative:**
+
+- Materialized priority column updated via background job or domain event
+- Configurable weight profiles per organization
+- Manual override with an audit trail entry
+
+---
+
+## 7. Architecture Scope
 
 **Decision:** Modular monolith + SPA frontend
 
@@ -140,7 +182,7 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 ---
 
-## 7. HIPAA & SOC 2 Considerations
+## 8. HIPAA & SOC 2 Considerations
 
 **Decision:** Discussed, not fully implemented
 
@@ -171,7 +213,7 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 ---
 
-## 8. General Assumptions
+## 9. General Assumptions
 
 - Single-tenant demo environment
 - One **sample report** with multiple **findings** is enough for MVP review

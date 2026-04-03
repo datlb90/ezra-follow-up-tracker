@@ -15,11 +15,13 @@ More detail: [docs/architecture.md](docs/architecture.md) (domain and boundaries
 
 ## 2. MVP features
 
-- View **all findings** for a **sample report** (report/finding read model).
-- **Create a follow-up task** from a finding (task linked to that finding).
-- **Update task status**: Not Started, In Progress, Completed.
-- **Search and filter** tasks by status and/or priority.
+- View **all findings** (with severity) for a **sample report** (report/finding read model).
+- **Create a follow-up task** from a finding with an optional due date.
+- **Update task status** via a one-click toggle button group: Not Started, In Progress, Completed.
+- **Automatic priority**: each task is scored by finding severity, due-date urgency, and status — overdue tasks are always Critical. Hover the priority badge to see the full score breakdown.
+- **Search and filter** tasks by status, priority level, and text search.
 - **Lightweight activity history** (e.g. task created, status changes) for auditability.
+- **Dashboard** showing task counts by status and a critical-priority count.
 
 ## 3. Product focus
 
@@ -81,8 +83,8 @@ Layered backend and a thin API layer on the frontend:
 | Backend | Responsibility |
 |--------|----------------|
 | **API** | HTTP, validation, DTO mapping |
-| **Application** | Use cases (create task from finding, update status, list with filters) |
-| **Domain** | Entities, enums (task status, priority), rules |
+| **Application** | Use cases (create task, update status, list with filters, compute priority) |
+| **Domain** | Entities, enums (task status, finding severity, priority level), rules |
 | **Infrastructure** | EF Core, SQLite, persistence |
 
 | Frontend | Responsibility |
@@ -115,14 +117,16 @@ This repo is a **demonstration**, not a certified HIPAA or SOC 2 deployment.
 
 **Product**
 
-- Assign tasks to users; notifications and due dates.
+- Assign tasks to users; notifications.
 - Multiple reports per person; richer finding taxonomy.
+- Configurable priority weights or ML-based scoring.
 
 **Technical**
 
 - Authentication and authorization (e.g. JWT / OIDC) and audit entries tied to user identity.
 - **Pagination** for large task lists (MVP may use simple lists).
 - Background jobs (reminders, outbound integrations).
+- Server-side priority-level filtering (currently client-side since priority is computed, not stored).
 
 **Scale and operations**
 
@@ -131,7 +135,7 @@ This repo is a **demonstration**, not a certified HIPAA or SOC 2 deployment.
 
 **Quality**
 
-- Unit tests for application services; API integration tests for main workflows.
+- API integration tests for main workflows.
 
 ## 10. Notes
 

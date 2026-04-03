@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a **small, production-minded** full-stack app: after a **sample MRI report** is available, users view **findings**, create **follow-up tasks** from those findings, update **status** and **priority**, filter/search tasks, and see a **lightweight activity history**.
+This project is a **small, production-minded** full-stack app: after a **sample MRI report** is available, users view **findings** (with severity), create **follow-up tasks** from those findings, update **status**, see **automatically computed priority**, filter/search tasks, and see a **lightweight activity history**.
 
 The backend is a **modular monolith**; the frontend is a **Vue SPA**. That keeps setup and review simple while still showing **clear module boundaries** aligned with the product:
 
@@ -49,7 +49,7 @@ Example fields:
 - `ReportId`
 - `Title` / headline
 - `Description` (plain text for demo)
-- Optional: `Category` or `Severity` for display/filtering on the finding list only
+- `Severity` — `Low`, `Medium`, `High` (used as an input to automatic task priority scoring)
 
 A report has many findings.
 
@@ -63,10 +63,11 @@ Example fields:
 - `FindingId` (required — task is created **from** a finding)
 - `Title` (may default from finding; editable if product allows)
 - `Description` (optional)
-- `Status` — **NotStarted**, **InProgress**, **Completed** (align with MVP)
-- `Priority` (for filter/search)
+- `Status` — **NotStarted**, **InProgress**, **Completed**
+- `DueAt` (optional) — used for due-date urgency scoring
 - `CreatedAt`, `UpdatedAt`
-- Optional later: `DueAt`, assignee
+
+Priority is **not stored** on the task. It is computed at read time by the `TaskPriorityService` using finding severity, due-date urgency, and task status. The result is a score, a level (`Low`, `Medium`, `High`, `Critical`), and a human-readable reason string. Overdue tasks are always `Critical`.
 
 ### TaskActivity (or Activity)
 
@@ -100,12 +101,13 @@ Example fields:
 ### Application layer
 
 - Use cases such as: `GetReportFindings`, `CreateFollowUpTaskFromFinding`, `UpdateTaskStatus`, `SearchFollowUpTasks`, `GetTaskActivity`.
+- `TaskPriorityService` — rule-based scoring engine that computes priority at read time from finding severity, due-date urgency, and task status.
 - Orchestrates domain + persistence; enforces **valid status transitions** and writes **activity** where appropriate.
 
 ### Domain layer
 
 - Entities: `Report`, `Finding`, `FollowUpTask`, `TaskActivity`.
-- Enums: `FollowUpTaskStatus`, `TaskPriority`, `ActivityType`.
+- Enums: `FollowUpTaskStatus`, `FindingSeverity`, `TaskPriorityLevel`, `ActivityType`.
 - Invariants that belong in the domain (e.g. completed tasks cannot regress without an explicit rule).
 
 ### Infrastructure layer
@@ -144,9 +146,9 @@ Alternatively: `GET /api/findings?reportId=` if you prefer a flatter URL space.
 List tasks with optional query parameters:
 
 - `status`
-- `priority`
 - `search` (title/description — MVP-level text search)
-- `reportId` or `findingId` (optional scoping)
+
+Each task response includes computed `priorityScore`, `priorityLevel`, and `priorityReason` fields. Priority-level filtering is done client-side.
 
 #### `GET /api/follow-up-tasks/{id}`
 
@@ -154,11 +156,11 @@ Task detail, optionally including recent activity.
 
 #### `POST /api/follow-up-tasks`
 
-Create from a finding; body includes at least `findingId` and optional overrides (`title`, `priority`, etc.).
+Create from a finding; body includes `findingId`, `title`, optional `description`, and optional `dueAt`.
 
 #### `PATCH` or `PUT /api/follow-up-tasks/{id}`
 
-Update task; **status** and **priority** are MVP requirements.
+Update task fields such as **title**, **description**, or **status**. Priority is computed automatically and cannot be set manually.
 
 ### Activity
 
@@ -186,8 +188,10 @@ Vue SPA: **calm**, readable, accessible forms and tables; explicit **loading / e
 
 - Show sample report and **findings list**.
 - Create **follow-up task** from a finding (modal or side panel).
-- **Task list** with **search** and **filters** (status, priority).
-- **Task detail** with **activity history** timeline.
+- **Task list** with **search** and **filters** (status, priority level).
+- One-click **status toggle** button group on each task row.
+- **Priority badge** with hover tooltip showing the score breakdown.
+- **Task activity** panel with history timeline.
 
 ### Suggested layout
 
