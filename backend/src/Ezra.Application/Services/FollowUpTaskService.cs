@@ -8,10 +8,14 @@ namespace Ezra.Application.Services;
 public class FollowUpTaskService : IFollowUpTaskService
 {
     private readonly IFollowUpTaskRepository _taskRepository;
+    private readonly ITaskActivityRepository _activityRepository;
 
-    public FollowUpTaskService(IFollowUpTaskRepository taskRepository)
+    public FollowUpTaskService(
+        IFollowUpTaskRepository taskRepository,
+        ITaskActivityRepository activityRepository)
     {
         _taskRepository = taskRepository;
+        _activityRepository = activityRepository;
     }
 
     public async Task<IReadOnlyList<FollowUpTaskResponse>> GetTasksAsync(
@@ -50,6 +54,16 @@ public class FollowUpTaskService : IFollowUpTaskService
         };
 
         var created = await _taskRepository.AddAsync(task, cancellationToken);
+
+        await _activityRepository.AddAsync(new TaskActivity
+        {
+            Id = Guid.NewGuid(),
+            FollowUpTaskId = created.Id,
+            OccurredAt = now,
+            Type = ActivityType.TaskCreated,
+            Summary = $"Task \"{created.Title}\" created from finding"
+        }, cancellationToken);
+
         return MapToResponse(created);
     }
 
@@ -61,6 +75,8 @@ public class FollowUpTaskService : IFollowUpTaskService
         var task = await _taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null) return null;
 
+        var previousStatus = task.Status;
+
         if (request.Title is not null) task.Title = request.Title;
         if (request.Description is not null) task.Description = request.Description;
         if (request.Status.HasValue) task.Status = request.Status.Value;
@@ -68,7 +84,33 @@ public class FollowUpTaskService : IFollowUpTaskService
         task.UpdatedAt = DateTime.UtcNow;
 
         await _taskRepository.UpdateAsync(task, cancellationToken);
+
+        if (request.Status.HasValue && request.Status.Value != previousStatus)
+        {
+            await _activityRepository.AddAsync(new TaskActivity
+            {
+                Id = Guid.NewGuid(),
+                FollowUpTaskId = task.Id,
+                OccurredAt = task.UpdatedAt,
+                Type = ActivityType.StatusChanged,
+                Summary = $"Status changed from {previousStatus} to {request.Status.Value}"
+            }, cancellationToken);
+        }
+
         return MapToResponse(task);
+    }
+
+    public async Task<DashboardSummaryResponse> GetDashboardSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var allTasks = await _taskRepository.GetAllAsync(cancellationToken: cancellationToken);
+
+        return new DashboardSummaryResponse
+        {
+            TotalTasks = allTasks.Count,
+            NotStarted = allTasks.Count(t => t.Status == FollowUpTaskStatus.NotStarted),
+            InProgress = allTasks.Count(t => t.Status == FollowUpTaskStatus.InProgress),
+            Completed = allTasks.Count(t => t.Status == FollowUpTaskStatus.Completed)
+        };
     }
 
     private static FollowUpTaskResponse MapToResponse(FollowUpTask task) => new()

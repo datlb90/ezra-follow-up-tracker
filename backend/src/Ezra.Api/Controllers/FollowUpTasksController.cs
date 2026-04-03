@@ -61,4 +61,12 @@ public class FollowUpTasksController : ControllerBase
         var updated = await _taskService.UpdateAsync(id, request, cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
     }
+
+    [HttpGet("dashboard")]
+    [ProducesResponseType(typeof(DashboardSummaryResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDashboardSummary(CancellationToken cancellationToken)
+    {
+        var summary = await _taskService.GetDashboardSummaryAsync(cancellationToken);
+        return Ok(summary);
+    }
 }

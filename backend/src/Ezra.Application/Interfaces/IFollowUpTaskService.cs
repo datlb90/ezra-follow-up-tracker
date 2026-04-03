@@ -14,4 +14,5 @@ public interface IFollowUpTaskService
     Task<FollowUpTaskResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<FollowUpTaskResponse> CreateFromFindingAsync(CreateFollowUpTaskRequest request, CancellationToken cancellationToken = default);
     Task<FollowUpTaskResponse?> UpdateAsync(Guid id, UpdateFollowUpTaskRequest request, CancellationToken cancellationToken = default);
+    Task<DashboardSummaryResponse> GetDashboardSummaryAsync(CancellationToken cancellationToken = default);
 }
