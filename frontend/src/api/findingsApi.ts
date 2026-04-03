@@ -1,1 +1,1 @@
-// Finding-specific API calls will go here
+export { getReportFindings, getReports } from './reportsApi'
