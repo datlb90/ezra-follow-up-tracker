@@ -26,7 +26,7 @@ More detail: [docs/architecture.md](docs/architecture.md) (domain and boundaries
 ## 3. Product focus
 
 - **Security and compliance (HIPAA, SOC 2)** — Demonstrated through design choices and documentation; full compliance is out of scope for a local demo (see [docs/tradeoffs.md](docs/tradeoffs.md)).
-- **Authentication** — JWT-based auth with registration, login, and an authenticated `/api/auth/me` endpoint. Passwords hashed with BCrypt. Swagger UI includes a Bearer token input for manual testing.
+- **Authentication** — JWT-based auth protecting all API endpoints. Login and registration pages, route guards, and automatic token handling on the frontend. Passwords hashed with BCrypt. Swagger UI includes a Bearer token input for manual testing.
 - **Domain modeling** — Report/finding read models vs follow-up task lifecycle vs status updates vs room for future integrations.
 - **Calm UX** — Clear, minimal, healthcare-appropriate UI (readable states, no visual noise).
 - **Auditability** — Activity history makes workflow changes tangible for reviewers.
@@ -117,8 +117,7 @@ Design choices: explicit request/response DTOs, no EF entities at the API bounda
 ## 7. Assumptions
 
 - Single-user or low-concurrency **demo** environment.
-- **Demo authentication** — JWT-based auth with seeded demo accounts. Passwords are hashed with BCrypt. The JWT secret key in `appsettings.json` is for local demo only; production would use a secrets vault.
-- Existing data endpoints (reports, tasks, activities) remain **unauthenticated** for now — auth enforcement on those routes is planned as a follow-up.
+- **Demo authentication** — JWT-based auth with seeded demo accounts. All API endpoints except login and registration require a valid Bearer token. Passwords are hashed with BCrypt. The JWT secret key in `appsettings.json` is for local demo only; production would use a secrets vault. Token is stored in `localStorage` (production would use httpOnly cookies or a more secure strategy).
 - Sample report and findings are **seeded or static** — not a live imaging or report-ingestion pipeline.
 - Consistency handled in the application layer (single database, no distributed transactions).
 
@@ -129,11 +128,11 @@ Design choices: explicit request/response DTOs, no EF entities at the API bounda
 The following measures are present in this demo:
 
 - **No real PHI** — all report, finding, and task data is synthetic seed content. No patient-identifiable information is stored or transmitted.
-- **Authentication** — JWT-based auth with BCrypt password hashing. Registration and login endpoints issue signed tokens; the `/api/auth/me` endpoint is protected with `[Authorize]`. The JWT secret key is a demo-only value stored in `appsettings.json`; production deployments would use a secrets vault.
+- **Authentication** — JWT-based auth with BCrypt password hashing. Registration and login endpoints issue signed tokens; all data endpoints (reports, tasks, activities) and `/api/auth/me` are protected with `[Authorize]`. The frontend enforces route guards and handles 401 responses with automatic logout. The JWT secret key is a demo-only value stored in `appsettings.json`; production deployments would use a secrets vault.
 - **Input validation** — all API endpoints enforce validation via DTOs with data annotations (`[Required]`, `[StringLength]`). Invalid requests are rejected with structured error responses before reaching business logic.
 - **Layered architecture** — the API surface is separated from domain logic and persistence. EF entities never leak to the client; only explicit DTOs cross the API boundary.
 - **Audit trail** — the activity history records what changed and when (task created, status transitions). This is a stepping stone toward full audit logging.
-- **Central API boundary** — all data flows through controller endpoints with explicit DTOs, making it straightforward to add authorization middleware (e.g. `[Authorize]`) in a single place.
+- **Protected API boundary** — all data endpoints require a valid JWT Bearer token via `[Authorize]` at the controller level. Only login and registration are anonymous.
 - **Global exception handler** — unhandled exceptions return a generic error message. Internal details and stack traces are not exposed to callers.
 - **Configuration-based secrets** — the connection string and other settings are loaded from `appsettings.json` / environment variables, not hardcoded. In production, these would be managed by a secrets vault.
 - **Logging avoids sensitive content** — no PHI exists in the seed data, and the application does not log request bodies.
@@ -167,9 +166,8 @@ For a detailed discussion, see [docs/tradeoffs.md](docs/tradeoffs.md).
 
 **Technical**
 
-- Frontend login flow and client-side auth state management.
-- Protect existing API routes with `[Authorize]` and frontend route guards.
 - Refresh tokens and token expiry handling.
+- Tie audit trail entries to authenticated user identity.
 - **Pagination** for large task lists (MVP may use simple lists).
 - Background jobs (reminders, outbound integrations).
 - Server-side priority-level filtering (currently client-side since priority is computed, not stored).

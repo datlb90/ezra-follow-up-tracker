@@ -1,10 +1,12 @@
 using Ezra.Application.DTOs.Activities;
 using Ezra.Application.Interfaces;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ezra.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/follow-up-tasks/{taskId:guid}/activities")]
 public class TaskActivitiesController : ControllerBase

@@ -2,10 +2,12 @@ using Ezra.Application.DTOs.Tasks;
 using Ezra.Application.Interfaces;
 using Ezra.Domain.Enums;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ezra.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/follow-up-tasks")]
 public class FollowUpTasksController : ControllerBase

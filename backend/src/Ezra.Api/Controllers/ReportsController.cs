@@ -1,10 +1,12 @@
 using Ezra.Application.DTOs.Reports;
 using Ezra.Application.Interfaces;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ezra.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ReportsController : ControllerBase

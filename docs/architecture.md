@@ -106,7 +106,7 @@ Example fields:
 
 ### Domain layer
 
-- Entities: `Report`, `Finding`, `FollowUpTask`, `TaskActivity`.
+- Entities: `Report`, `Finding`, `FollowUpTask`, `TaskActivity`, `User`.
 - Enums: `FollowUpTaskStatus`, `FindingSeverity`, `TaskPriorityLevel`, `ActivityType`.
 - Invariants that belong in the domain (e.g. completed tasks cannot regress without an explicit rule).
 
@@ -122,6 +122,22 @@ Example fields:
 ## API overview (illustrative)
 
 Routes are indicative; final paths should stay **resource-oriented** and **DTO-backed**.
+
+**Authentication:** All data endpoints require a valid JWT Bearer token (`[Authorize]` at the controller level). Only `POST /api/auth/login` and `POST /api/auth/register` are anonymous. See the Setup section in [README.md](../README.md) for demo credentials.
+
+### Authentication
+
+#### `POST /api/auth/register`
+
+Create a new account. Returns a JWT token on success.
+
+#### `POST /api/auth/login`
+
+Authenticate with email and password. Returns a JWT token on success.
+
+#### `GET /api/auth/me`
+
+Returns the authenticated user's profile. Requires Bearer token.
 
 ### Report and findings (read)
 
@@ -186,6 +202,7 @@ Vue SPA: **calm**, readable, accessible forms and tables; explicit **loading / e
 
 ### Main responsibilities
 
+- **Authentication** — login and registration pages; Pinia auth store with `localStorage` token persistence; Vue Router navigation guard redirecting unauthenticated users to `/login`; Axios interceptors for Bearer token attachment and automatic logout on 401.
 - Show sample report and **findings list**.
 - Create **follow-up task** from a finding (modal or side panel).
 - **Task list** with **search** and **filters** (status, priority level).

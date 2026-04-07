@@ -28,24 +28,34 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 ## 2. Authentication & Authorization
 
-**Decision:** No real authentication implemented
+**Decision:** JWT-based authentication with demo accounts
 
-**Why:**
+**What is implemented:**
 
-- Out of scope for a take-home
-- Avoid unnecessary complexity (JWT, identity providers, RBAC)
+- User registration and login endpoints with BCrypt password hashing
+- JWT token issuance with HMAC-SHA256 signing
+- All data endpoints (reports, tasks, activities) protected with `[Authorize]`; only login and registration are anonymous
+- Frontend login/register pages, Pinia auth store with `localStorage` token persistence
+- Vue Router navigation guard redirecting unauthenticated users to `/login`
+- Axios 401 response interceptor for automatic logout on expired/invalid tokens
+- Two seeded demo accounts for reviewer convenience
+- Swagger UI Bearer token input for manual API testing
+- Demo-only secret key in `appsettings.json` (clearly named, documented as not production-safe)
 
 **Tradeoffs:**
 
-- Endpoints are not protected
-- No user identity or role-based access control
-- Not secure for real-world usage
+- Token stored in `localStorage` — vulnerable to XSS in a real app; production would use httpOnly cookies or a BFF pattern
+- No refresh tokens — token expires after 60 minutes with no silent renewal
+- No RBAC — all authenticated users see the same data; no per-user scoping
+- Audit trail entries are not yet tied to the authenticated user identity
 
 **Production Alternative:**
 
-- OAuth2 / OIDC (e.g., Auth0, Azure AD B2C)
-- Role-based access control (RBAC)
-- Audit logging tied to user identity
+- httpOnly cookie token storage or Backend-for-Frontend (BFF) pattern
+- Refresh token rotation with short-lived access tokens
+- OAuth2 / OIDC (e.g. Auth0, Azure AD B2C) for SSO and MFA
+- Role-based access control (RBAC) with per-user or per-organization data scoping
+- Audit logging tied to authenticated user identity
 
 ---
 
@@ -108,7 +118,7 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 - No full history reconstruction of the entire system
 - Limited traceability of complex workflows
-- Without authentication, “who” is often omitted or synthetic — **when** and **what** still demonstrate the pattern
+- Authentication is now present but audit entries are not yet linked to user identity — **when** and **what** are captured; tying entries to **who** is a planned next step
 
 **Production Alternative:**
 
@@ -191,8 +201,8 @@ This demo is not a production deployment, but it does incorporate practices that
 - **No real PHI** — all data is synthetic. Report titles, finding descriptions, and task content are fabricated seed data with no patient-identifiable information.
 - **Input validation at API boundaries** — every endpoint uses explicit request DTOs with data annotations (`[Required]`, `[StringLength(200)]`, `[StringLength(2000)]`). Invalid payloads are rejected before reaching business logic. Foreign key references (e.g. `FindingId`) are checked for existence before writes.
 - **Layered architecture** — the API layer is separated from application services, domain entities, and infrastructure. EF entities never cross the API boundary; only typed DTOs are serialized to clients. This limits over-posting and accidental data exposure.
-- **Activity history as proto-audit-log** — task creation, status transitions, and other significant events are recorded with timestamps in an append-style `TaskActivity` table. Without authentication, "who" is absent, but "what" and "when" are captured — demonstrating the pattern that a production audit log would extend.
-- **Central API boundary ready for authorization** — all data flows through controller endpoints. The controller structure, dependency injection, and clean service interfaces mean adding `[Authorize]` attributes and an authentication middleware is a localized change, not a redesign.
+- **Activity history as proto-audit-log** — task creation, status transitions, and other significant events are recorded with timestamps in an append-style `TaskActivity` table. Authentication is present; tying entries to the authenticated user identity is a planned next step.
+- **All data endpoints protected** — every controller serving reports, tasks, and activities requires a valid JWT Bearer token via `[Authorize]`. Only login and registration are anonymous. The frontend enforces route guards and handles 401 responses with automatic logout.
 - **Global exception handler** — `UseExceptionHandler` middleware catches unhandled exceptions and returns a generic `{ "message": "An unexpected error occurred." }` response. Internal details, stack traces, and EF exception messages are never exposed to callers.
 - **Configuration-based secrets** — connection strings and settings are loaded from `appsettings.json` and can be overridden by environment variables. No credentials are hardcoded. In production, these would be managed by a secrets vault (e.g. Azure Key Vault, AWS Secrets Manager).
 - **Logging avoids sensitive content** — no PHI exists in the seed data. The application does not log request or response bodies. Production logging would add structured logging with explicit PHI exclusion rules.

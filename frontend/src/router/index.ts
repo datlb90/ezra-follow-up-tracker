@@ -5,6 +5,7 @@ import FindingsPage from '@/pages/FindingsPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import TasksPage from '@/pages/TasksPage.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -21,6 +22,18 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginPage, meta: { isAuthPage: true } },
     { path: '/register', name: 'register', component: RegisterPage, meta: { isAuthPage: true } }
   ]
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  if (!to.meta.isAuthPage && !authStore.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (to.meta.isAuthPage && authStore.isAuthenticated) {
+    return { name: 'dashboard' }
+  }
 })
 
 export default router
