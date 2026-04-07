@@ -59,6 +59,7 @@ onMounted(async () => {
           <p class="text-sm text-slate-700">{{ activity.summary }}</p>
           <p class="text-xs text-slate-400">
             {{ new Date(activity.occurredAt).toLocaleString() }}
+            <span v-if="activity.actorName"> &middot; by {{ activity.actorName }}</span>
           </p>
         </li>
       </ul>

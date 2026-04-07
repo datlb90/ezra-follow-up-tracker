@@ -24,7 +24,9 @@ public class TaskActivityService : ITaskActivityService
             FollowUpTaskId = a.FollowUpTaskId,
             OccurredAt = a.OccurredAt,
             Type = a.Type,
-            Summary = a.Summary
+            Summary = a.Summary,
+            ActorId = a.ActorId,
+            ActorName = a.ActorName
         }).ToList();
     }
 }

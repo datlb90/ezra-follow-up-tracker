@@ -17,6 +17,8 @@ public class FollowUpTaskServiceTests
     private readonly FollowUpTaskService _service;
 
     private static readonly Guid FindingId = Guid.NewGuid();
+    private static readonly Guid ActorId = Guid.NewGuid();
+    private const string ActorName = "Demo User";
 
     public FollowUpTaskServiceTests()
     {
@@ -42,7 +44,7 @@ public class FollowUpTaskServiceTests
 
         SetupCreateMocks();
 
-        var result = await _service.CreateFromFindingAsync(request);
+        var result = await _service.CreateFromFindingAsync(request, ActorId, ActorName);
 
         Assert.NotNull(result);
         Assert.Equal(FollowUpTaskStatus.NotStarted, result.Status);
@@ -60,7 +62,7 @@ public class FollowUpTaskServiceTests
 
         SetupCreateMocks();
 
-        var result = await _service.CreateFromFindingAsync(request);
+        var result = await _service.CreateFromFindingAsync(request, ActorId, ActorName);
 
         Assert.NotNull(result);
         Assert.Equal(FindingId, result.FindingId);
@@ -79,10 +81,13 @@ public class FollowUpTaskServiceTests
 
         SetupCreateMocks();
 
-        await _service.CreateFromFindingAsync(request);
+        await _service.CreateFromFindingAsync(request, ActorId, ActorName);
 
         await _activityRepo.Received(1).AddAsync(
-            Arg.Is<TaskActivity>(a => a.Type == ActivityType.TaskCreated),
+            Arg.Is<TaskActivity>(a =>
+                a.Type == ActivityType.TaskCreated &&
+                a.ActorId == ActorId &&
+                a.ActorName == ActorName),
             Arg.Any<CancellationToken>());
     }
 
@@ -98,7 +103,7 @@ public class FollowUpTaskServiceTests
             Title = "Should not be created"
         };
 
-        var result = await _service.CreateFromFindingAsync(request);
+        var result = await _service.CreateFromFindingAsync(request, ActorId, ActorName);
 
         Assert.Null(result);
         await _taskRepo.DidNotReceive().AddAsync(
@@ -120,13 +125,15 @@ public class FollowUpTaskServiceTests
 
         var request = new UpdateFollowUpTaskRequest { Status = FollowUpTaskStatus.InProgress };
 
-        await _service.UpdateAsync(task.Id, request);
+        await _service.UpdateAsync(task.Id, request, ActorId, ActorName);
 
         await _activityRepo.Received(1).AddAsync(
             Arg.Is<TaskActivity>(a =>
                 a.Type == ActivityType.StatusChanged &&
                 a.Summary.Contains("NotStarted") &&
-                a.Summary.Contains("InProgress")),
+                a.Summary.Contains("InProgress") &&
+                a.ActorId == ActorId &&
+                a.ActorName == ActorName),
             Arg.Any<CancellationToken>());
     }
 
@@ -138,7 +145,7 @@ public class FollowUpTaskServiceTests
 
         var request = new UpdateFollowUpTaskRequest { Status = FollowUpTaskStatus.InProgress };
 
-        await _service.UpdateAsync(task.Id, request);
+        await _service.UpdateAsync(task.Id, request, ActorId, ActorName);
 
         await _activityRepo.DidNotReceive().AddAsync(
             Arg.Any<TaskActivity>(),
@@ -154,7 +161,7 @@ public class FollowUpTaskServiceTests
         var result = await _service.UpdateAsync(Guid.NewGuid(), new UpdateFollowUpTaskRequest
         {
             Status = FollowUpTaskStatus.Completed
-        });
+        }, ActorId, ActorName);
 
         Assert.Null(result);
     }

@@ -61,6 +61,8 @@ export interface TaskActivityResponse {
   occurredAt: string
   type: ActivityType
   summary: string
+  actorId: string | null
+  actorName: string | null
 }
 
 export interface TaskFilters {

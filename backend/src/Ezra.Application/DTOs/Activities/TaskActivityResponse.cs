@@ -9,4 +9,6 @@ public class TaskActivityResponse
     public DateTime OccurredAt { get; init; }
     public ActivityType Type { get; init; }
     public string Summary { get; init; } = string.Empty;
+    public Guid? ActorId { get; init; }
+    public string? ActorName { get; init; }
 }

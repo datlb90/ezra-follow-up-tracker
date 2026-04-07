@@ -118,7 +118,7 @@ This project is **Ezra Follow-Up Tracker**: a demo focused on **post-report** wo
 
 - No full history reconstruction of the entire system
 - Limited traceability of complex workflows
-- Authentication is now present but audit entries are not yet linked to user identity — **when** and **what** are captured; tying entries to **who** is a planned next step
+- Audit entries now capture **who** via denormalized `ActorId` and `ActorName` fields on `TaskActivity`, preserving the actor's name at the time of the action even if the user is later renamed or deleted. Both fields are nullable for backward compatibility with entries created before authentication was introduced
 
 **Production Alternative:**
 

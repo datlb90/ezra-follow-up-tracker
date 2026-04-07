@@ -80,6 +80,8 @@ Example fields:
 - `OccurredAt`
 - `Type` (e.g. `TaskCreated`, `StatusChanged`, `TaskUpdated`)
 - `Summary` or structured payload (e.g. previous/new status) — keep DTOs explicit at the API
+- `ActorId` (nullable) — the authenticated user who performed the action
+- `ActorName` (nullable) — denormalized snapshot of the actor's display name at the time of the action
 
 ---
 

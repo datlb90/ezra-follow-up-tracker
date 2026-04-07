@@ -51,6 +51,7 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(50);
             entity.Property(e => e.Summary).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ActorName).HasMaxLength(100);
             entity.HasOne(e => e.FollowUpTask)
                 .WithMany(t => t.Activities)
                 .HasForeignKey(e => e.FollowUpTaskId)

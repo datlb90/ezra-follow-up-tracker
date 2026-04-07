@@ -42,6 +42,8 @@ public class FollowUpTaskService : IFollowUpTaskService
 
     public async Task<FollowUpTaskResponse?> CreateFromFindingAsync(
         CreateFollowUpTaskRequest request,
+        Guid actorId,
+        string actorName,
         CancellationToken cancellationToken = default)
     {
         var findingExists = await _reportRepository.FindingExistsAsync(request.FindingId, cancellationToken);
@@ -69,7 +71,9 @@ public class FollowUpTaskService : IFollowUpTaskService
             FollowUpTaskId = created.Id,
             OccurredAt = now,
             Type = ActivityType.TaskCreated,
-            Summary = $"Task \"{created.Title}\" created from finding"
+            Summary = $"Task \"{created.Title}\" created from finding",
+            ActorId = actorId,
+            ActorName = actorName
         }, cancellationToken);
 
         var loaded = await _taskRepository.GetByIdAsync(created.Id, cancellationToken);
@@ -79,6 +83,8 @@ public class FollowUpTaskService : IFollowUpTaskService
     public async Task<FollowUpTaskResponse?> UpdateAsync(
         Guid id,
         UpdateFollowUpTaskRequest request,
+        Guid actorId,
+        string actorName,
         CancellationToken cancellationToken = default)
     {
         var task = await _taskRepository.GetByIdAsync(id, cancellationToken);
@@ -102,7 +108,9 @@ public class FollowUpTaskService : IFollowUpTaskService
                 FollowUpTaskId = task.Id,
                 OccurredAt = task.UpdatedAt,
                 Type = ActivityType.StatusChanged,
-                Summary = $"Status changed from {previousStatus} to {request.Status.Value}"
+                Summary = $"Status changed from {previousStatus} to {request.Status.Value}",
+                ActorId = actorId,
+                ActorName = actorName
             }, cancellationToken);
         }
 

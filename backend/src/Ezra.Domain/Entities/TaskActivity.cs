@@ -9,6 +9,8 @@ public class TaskActivity
     public DateTime OccurredAt { get; set; }
     public ActivityType Type { get; set; }
     public string Summary { get; set; } = string.Empty;
+    public Guid? ActorId { get; set; }
+    public string? ActorName { get; set; }
 
     public FollowUpTask FollowUpTask { get; set; } = null!;
 }

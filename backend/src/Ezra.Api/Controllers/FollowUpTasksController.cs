@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
 using Ezra.Application.DTOs.Tasks;
 using Ezra.Application.Interfaces;
 using Ezra.Domain.Enums;
@@ -46,7 +49,8 @@ public class FollowUpTasksController : ControllerBase
         [FromBody] CreateFollowUpTaskRequest request,
         CancellationToken cancellationToken)
     {
-        var created = await _taskService.CreateFromFindingAsync(request, cancellationToken);
+        var (actorId, actorName) = GetCurrentUser();
+        var created = await _taskService.CreateFromFindingAsync(request, actorId, actorName, cancellationToken);
         if (created is null)
             return BadRequest(new { message = "Finding not found. Verify the findingId is valid." });
 
@@ -62,7 +66,8 @@ public class FollowUpTasksController : ControllerBase
         [FromBody] UpdateFollowUpTaskRequest request,
         CancellationToken cancellationToken)
     {
-        var updated = await _taskService.UpdateAsync(id, request, cancellationToken);
+        var (actorId, actorName) = GetCurrentUser();
+        var updated = await _taskService.UpdateAsync(id, request, actorId, actorName, cancellationToken);
         return updated is null ? NotFound(new { message = "Task not found." }) : Ok(updated);
     }
 
@@ -72,5 +77,15 @@ public class FollowUpTasksController : ControllerBase
     {
         var summary = await _taskService.GetDashboardSummaryAsync(cancellationToken);
         return Ok(summary);
+    }
+
+    private (Guid id, string name) GetCurrentUser()
+    {
+        var id = Guid.Parse(
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var name = User.FindFirstValue(JwtRegisteredClaimNames.Name)
+            ?? User.FindFirstValue(ClaimTypes.Name) ?? "Unknown";
+        return (id, name);
     }
 }
