@@ -7,6 +7,40 @@ public static class SeedData
 {
     public static async Task InitializeAsync(AppDbContext context)
     {
+        await SeedUsersAsync(context);
+        await SeedReportsAsync(context);
+    }
+
+    private static async Task SeedUsersAsync(AppDbContext context)
+    {
+        if (context.Users.Any()) return;
+
+        var users = new List<User>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Email = "demo@ezra.com",
+                FullName = "Demo User",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Email = "admin@ezra.com",
+                FullName = "Admin User",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Users.AddRange(users);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedReportsAsync(AppDbContext context)
+    {
         if (context.Reports.Any()) return;
 
         var reportId = Guid.NewGuid();

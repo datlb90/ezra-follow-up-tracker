@@ -1,4 +1,5 @@
 using Ezra.Application.Interfaces;
+using Ezra.Infrastructure.Auth;
 using Ezra.Infrastructure.Data;
 using Ezra.Infrastructure.Repositories;
 
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IFollowUpTaskRepository, FollowUpTaskRepository>();
         services.AddScoped<ITaskActivityRepository, TaskActivityRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

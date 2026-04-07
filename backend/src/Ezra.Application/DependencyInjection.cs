@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IFollowUpTaskService, FollowUpTaskService>();
         services.AddScoped<ITaskActivityService, TaskActivityService>();
         services.AddSingleton<ITaskPriorityService, TaskPriorityService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }

@@ -26,6 +26,7 @@ More detail: [docs/architecture.md](docs/architecture.md) (domain and boundaries
 ## 3. Product focus
 
 - **Security and compliance (HIPAA, SOC 2)** — Demonstrated through design choices and documentation; full compliance is out of scope for a local demo (see [docs/tradeoffs.md](docs/tradeoffs.md)).
+- **Authentication** — JWT-based auth with registration, login, and an authenticated `/api/auth/me` endpoint. Passwords hashed with BCrypt. Swagger UI includes a Bearer token input for manual testing.
 - **Domain modeling** — Report/finding read models vs follow-up task lifecycle vs status updates vs room for future integrations.
 - **Calm UX** — Clear, minimal, healthcare-appropriate UI (readable states, no visual noise).
 - **Auditability** — Activity history makes workflow changes tangible for reviewers.
@@ -68,6 +69,15 @@ API (default): `http://localhost:5124` — Swagger UI at `/swagger`
 
 The database is created and seeded automatically on first run (SQLite via `EnsureCreated`).
 
+**Demo credentials** (seeded on first run):
+
+| Email | Password |
+|-------|----------|
+| `demo@ezra.com` | `Password123!` |
+| `admin@ezra.com` | `Password123!` |
+
+> If you already have an `ezra.db` from before auth was added, delete it and restart the backend so the Users table is created and seeded.
+
 ### Tests
 
 ```bash
@@ -107,7 +117,8 @@ Design choices: explicit request/response DTOs, no EF entities at the API bounda
 ## 7. Assumptions
 
 - Single-user or low-concurrency **demo** environment.
-- **No authentication** in the first iteration (documented tradeoff).
+- **Demo authentication** — JWT-based auth with seeded demo accounts. Passwords are hashed with BCrypt. The JWT secret key in `appsettings.json` is for local demo only; production would use a secrets vault.
+- Existing data endpoints (reports, tasks, activities) remain **unauthenticated** for now — auth enforcement on those routes is planned as a follow-up.
 - Sample report and findings are **seeded or static** — not a live imaging or report-ingestion pipeline.
 - Consistency handled in the application layer (single database, no distributed transactions).
 
@@ -118,6 +129,7 @@ Design choices: explicit request/response DTOs, no EF entities at the API bounda
 The following measures are present in this demo:
 
 - **No real PHI** — all report, finding, and task data is synthetic seed content. No patient-identifiable information is stored or transmitted.
+- **Authentication** — JWT-based auth with BCrypt password hashing. Registration and login endpoints issue signed tokens; the `/api/auth/me` endpoint is protected with `[Authorize]`. The JWT secret key is a demo-only value stored in `appsettings.json`; production deployments would use a secrets vault.
 - **Input validation** — all API endpoints enforce validation via DTOs with data annotations (`[Required]`, `[StringLength]`). Invalid requests are rejected with structured error responses before reaching business logic.
 - **Layered architecture** — the API surface is separated from domain logic and persistence. EF entities never leak to the client; only explicit DTOs cross the API boundary.
 - **Audit trail** — the activity history records what changed and when (task created, status transitions). This is a stepping stone toward full audit logging.
@@ -155,7 +167,9 @@ For a detailed discussion, see [docs/tradeoffs.md](docs/tradeoffs.md).
 
 **Technical**
 
-- Authentication and authorization (e.g. JWT / OIDC) and audit entries tied to user identity.
+- Frontend login flow and client-side auth state management.
+- Protect existing API routes with `[Authorize]` and frontend route guards.
+- Refresh tokens and token expiry handling.
 - **Pagination** for large task lists (MVP may use simple lists).
 - Background jobs (reminders, outbound integrations).
 - Server-side priority-level filtering (currently client-side since priority is computed, not stored).
