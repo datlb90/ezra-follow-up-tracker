@@ -68,3 +68,27 @@ export interface TaskFilters {
   priorityLevel?: TaskPriorityLevel
   search?: string
 }
+
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface RegisterRequest {
+  email: string
+  fullName: string
+  password: string
+}
+
+export interface AuthResponse {
+  token: string
+  email: string
+  fullName: string
+}
+
+export interface UserResponse {
+  id: string
+  email: string
+  fullName: string
+  createdAt: string
+}
