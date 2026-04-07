@@ -1,4 +1,4 @@
-# Architecture — Ezra Follow-Up Tracker
+﻿# Architecture — Ezra Follow-Up Tracker
 
 ## Overview
 
@@ -104,17 +104,17 @@ Example fields:
 
 - Use cases such as: `GetReportFindings`, `CreateFollowUpTaskFromFinding`, `UpdateTaskStatus`, `SearchFollowUpTasks`, `GetTaskActivity`.
 - `TaskPriorityService` — rule-based scoring engine that computes priority at read time from finding severity, due-date urgency, and task status.
-- Orchestrates domain + persistence; enforces **valid status transitions** and writes **activity** where appropriate.
+- Orchestrates domain + persistence; records **activity** on task creation and status changes. Status transitions are currently unconstrained; enforcing a transition matrix is a future improvement.
 
 ### Domain layer
 
 - Entities: `Report`, `Finding`, `FollowUpTask`, `TaskActivity`, `User`.
 - Enums: `FollowUpTaskStatus`, `FindingSeverity`, `TaskPriorityLevel`, `ActivityType`.
-- Invariants that belong in the domain (e.g. completed tasks cannot regress without an explicit rule).
+- Invariants that belong in the domain (e.g. status transition rules could be enforced here in a future iteration).
 
 ### Infrastructure layer
 
-- `DbContext`, EF mappings, migrations, SQLite.
+- `DbContext`, EF mappings, `EnsureCreated()` for schema creation (no migrations), SQLite.
 - Optional: seed data for one report and several findings.
 
 **Dependency direction:** API → Application → Domain; Infrastructure implements persistence for Application.
@@ -147,15 +147,9 @@ Returns the authenticated user's profile. Requires Bearer token.
 
 List reports available in the demo (often one).
 
-#### `GET /api/reports/{reportId}`
-
-Single report metadata.
-
 #### `GET /api/reports/{reportId}/findings`
 
 All findings for that report (MVP: “view all findings for a sample report”).
-
-Alternatively: `GET /api/findings?reportId=` if you prefer a flatter URL space.
 
 ### Follow-up tasks
 
@@ -170,23 +164,21 @@ Each task response includes computed `priorityScore`, `priorityLevel`, and `prio
 
 #### `GET /api/follow-up-tasks/{id}`
 
-Task detail, optionally including recent activity.
+Task detail. Activity history is fetched separately via the activities endpoint below.
 
 #### `POST /api/follow-up-tasks`
 
 Create from a finding; body includes `findingId`, `title`, optional `description`, and optional `dueAt`.
 
-#### `PATCH` or `PUT /api/follow-up-tasks/{id}`
+#### `PUT /api/follow-up-tasks/{id}`
 
-Update task fields such as **title**, **description**, or **status**. Priority is computed automatically and cannot be set manually.
+Update task fields such as **title**, **description**, **dueAt**, or **status**. Priority is computed automatically and cannot be set manually.
 
 ### Activity
 
-#### `GET /api/follow-up-tasks/{id}/activities`
+#### `GET /api/follow-up-tasks/{taskId}/activities`
 
-Paginated or capped list of activity events for that task.
-
-Alternatively: `GET /api/activities?taskId=` — choose one style and keep it consistent.
+List of activity events for that task, ordered by most recent first. Each entry includes `actorId` and `actorName` identifying the user who performed the action.
 
 ---
 
@@ -212,41 +204,41 @@ Vue SPA: **calm**, readable, accessible forms and tables; explicit **loading / e
 - **Priority badge** with hover tooltip showing the score breakdown.
 - **Task activity** panel with history timeline.
 
-### Suggested layout
+### Actual layout
 
 ```text
 src/
   api/
+    authApi.ts
+    http.ts
     reportsApi.ts
-    findingsApi.ts
     followUpTasksApi.ts
-    activitiesApi.ts
 
   components/
-    layout/
-    reports/
-    findings/
-    tasks/
-    activity/
-    shared/
+    layout/        (AppLayout, AppHeader, AppSidebar)
+    findings/      (FindingCard, CreateTaskModal)
+    tasks/         (TaskRow, TaskFilters, TaskActivityPanel)
+    shared/        (LoadingSpinner, SeverityBadge, PriorityLevelBadge)
 
   pages/
-    ReportFindingsPage.vue
-    TaskListPage.vue
-    TaskDetailPage.vue
+    DashboardPage.vue
+    FindingsPage.vue
+    TasksPage.vue
+    LoginPage.vue
+    RegisterPage.vue
 
-  composables/
-    useTaskFilters.ts
+  stores/
+    authStore.ts
+    taskStore.ts
 
   router/
     index.ts
 
   types/
     api.ts
-    domain.ts
 ```
 
-Naming can vary; keep **API calls out of** oversized page components when it improves clarity.
+API calls live in `api/`; page components orchestrate loading, error, and empty states.
 
 ---
 

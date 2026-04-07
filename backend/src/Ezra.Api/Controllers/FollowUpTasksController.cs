@@ -49,8 +49,11 @@ public class FollowUpTasksController : ControllerBase
         [FromBody] CreateFollowUpTaskRequest request,
         CancellationToken cancellationToken)
     {
-        var (actorId, actorName) = GetCurrentUser();
-        var created = await _taskService.CreateFromFindingAsync(request, actorId, actorName, cancellationToken);
+        var actor = TryGetCurrentUser();
+        if (actor is null)
+            return Unauthorized(new { message = "Invalid token." });
+
+        var created = await _taskService.CreateFromFindingAsync(request, actor.Value.id, actor.Value.name, cancellationToken);
         if (created is null)
             return BadRequest(new { message = "Finding not found. Verify the findingId is valid." });
 
@@ -66,8 +69,11 @@ public class FollowUpTasksController : ControllerBase
         [FromBody] UpdateFollowUpTaskRequest request,
         CancellationToken cancellationToken)
     {
-        var (actorId, actorName) = GetCurrentUser();
-        var updated = await _taskService.UpdateAsync(id, request, actorId, actorName, cancellationToken);
+        var actor = TryGetCurrentUser();
+        if (actor is null)
+            return Unauthorized(new { message = "Invalid token." });
+
+        var updated = await _taskService.UpdateAsync(id, request, actor.Value.id, actor.Value.name, cancellationToken);
         return updated is null ? NotFound(new { message = "Task not found." }) : Ok(updated);
     }
 
@@ -79,11 +85,14 @@ public class FollowUpTasksController : ControllerBase
         return Ok(summary);
     }
 
-    private (Guid id, string name) GetCurrentUser()
+    private (Guid id, string name)? TryGetCurrentUser()
     {
-        var id = Guid.Parse(
-            User.FindFirstValue(JwtRegisteredClaimNames.Sub)
-            ?? User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var raw = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (raw is null || !Guid.TryParse(raw, out var id))
+            return null;
+
         var name = User.FindFirstValue(JwtRegisteredClaimNames.Name)
             ?? User.FindFirstValue(ClaimTypes.Name) ?? "Unknown";
         return (id, name);

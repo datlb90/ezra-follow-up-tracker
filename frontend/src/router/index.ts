@@ -20,7 +20,8 @@ const router = createRouter({
     { path: '/findings', name: 'findings', component: FindingsPage },
     { path: '/tasks', name: 'tasks', component: TasksPage },
     { path: '/login', name: 'login', component: LoginPage, meta: { isAuthPage: true } },
-    { path: '/register', name: 'register', component: RegisterPage, meta: { isAuthPage: true } }
+    { path: '/register', name: 'register', component: RegisterPage, meta: { isAuthPage: true } },
+    { path: '/:pathMatch(.*)*', redirect: '/' }
   ]
 })
 

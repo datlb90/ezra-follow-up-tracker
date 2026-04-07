@@ -15,17 +15,15 @@ const error = ref<string | null>(null)
 async function loadDashboard() {
   loading.value = true
   error.value = null
-  try {
-    const [summaryResult] = await Promise.all([
-      getDashboardSummary(),
-      store.fetchTasks()
-    ])
-    summary.value = summaryResult
-  } catch {
-    error.value = 'Failed to load dashboard.'
-  } finally {
-    loading.value = false
+  const [summaryResult, tasksResult] = await Promise.allSettled([
+    getDashboardSummary(),
+    store.fetchTasks()
+  ])
+  summary.value = summaryResult.status === 'fulfilled' ? summaryResult.value : null
+  if (summaryResult.status === 'rejected' || tasksResult.status === 'rejected') {
+    error.value = 'Some dashboard data failed to load.'
   }
+  loading.value = false
 }
 
 onMounted(loadDashboard)
@@ -51,11 +49,12 @@ const cards = [
 
     <LoadingSpinner v-if="loading" />
 
-    <p v-else-if="error" class="mt-6 text-sm text-red-600" role="alert">
+    <template v-else>
+    <p v-if="error" class="mt-6 text-sm text-red-600" role="alert">
       {{ error }}
     </p>
 
-    <div v-else-if="summary" class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div v-if="summary" class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <div
         v-for="card in cards"
         :key="card.key"
@@ -72,5 +71,6 @@ const cards = [
         <p class="mt-1 text-2xl font-semibold text-slate-800">{{ criticalCount }}</p>
       </div>
     </div>
+    </template>
   </div>
 </template>
